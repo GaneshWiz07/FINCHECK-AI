@@ -24,14 +24,17 @@ app = FastAPI(
 )
 
 import os
-allowed_origins = os.environ.get("REPLIT_DEV_DOMAIN", "").split(",")
-allowed_origins = [f"https://{origin.strip()}" for origin in allowed_origins if origin.strip()]
-allowed_origins.append("http://localhost:5000")
-allowed_origins.append("http://127.0.0.1:5000")
+replit_domain = os.environ.get("REPLIT_DEV_DOMAIN", "")
+allowed_origins = [f"https://{origin.strip()}" for origin in replit_domain.split(",") if origin.strip()]
+allowed_origins.extend(["http://localhost:5000", "http://127.0.0.1:5000"])
+
+if not allowed_origins:
+    print("Warning: No REPLIT_DEV_DOMAIN set, using localhost only for CORS")
+    allowed_origins = ["http://localhost:5000", "http://127.0.0.1:5000"]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=allowed_origins if allowed_origins else ["*"],
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
