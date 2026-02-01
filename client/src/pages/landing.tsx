@@ -110,7 +110,7 @@ export default function LandingPage() {
                 {t('getStarted')}
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
-              <Button size="lg" variant="outline" data-testid="button-learn-more">
+              <Button size="lg" variant="outline" onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })} data-testid="button-learn-more">
                 {t('learnMore')}
               </Button>
             </div>
@@ -226,7 +226,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <section className="py-24 lg:py-32">
+      <section id="features" className="py-24 lg:py-32">
         <div className="container mx-auto px-4">
           <div className="grid lg:grid-cols-2 gap-16 items-center">
             <div>
