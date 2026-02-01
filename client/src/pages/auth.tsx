@@ -3,7 +3,7 @@ import { useLocation } from 'wouter';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Loader2, Mail, Lock, Building2, Factory, DollarSign } from 'lucide-react';
+import { Loader2, Mail, Lock, Building2, Factory, DollarSign, Sparkles, Shield, BarChart3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -53,6 +53,12 @@ const revenueRanges = [
   { value: '1Cr-5Cr', label: '₹1 - 5 Crores' },
   { value: '5Cr-10Cr', label: '₹5 - 10 Crores' },
   { value: '10Cr+', label: 'Above ₹10 Crores' },
+];
+
+const features = [
+  { icon: BarChart3, title: 'Credit Score Analysis', desc: 'Get a comprehensive creditworthiness score based on your financial data' },
+  { icon: Factory, title: 'Industry Benchmarking', desc: 'Compare your metrics against industry averages' },
+  { icon: Sparkles, title: 'AI Recommendations', desc: 'Receive personalized insights to grow your business' },
 ];
 
 export default function AuthPage() {
@@ -123,65 +129,68 @@ export default function AuthPage() {
 
   return (
     <div className="min-h-screen bg-background flex">
-      <div className="hidden lg:flex lg:flex-1 bg-sidebar text-sidebar-foreground p-12 flex-col justify-between">
-        <div>
-          <Logo size="lg" />
-          <h1 className="text-4xl font-bold mt-12 tracking-tight">
-            Financial Health Assessment for SMEs
-          </h1>
-          <p className="text-lg text-sidebar-foreground/70 mt-4 max-w-md">
-            Get AI-powered insights into your business finances. Understand your creditworthiness, 
-            identify risks, and receive actionable recommendations.
-          </p>
+      <div className="hidden lg:flex lg:flex-1 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-sidebar via-sidebar to-primary/20" />
+        <div className="absolute inset-0">
+          <div className="absolute top-20 left-20 w-72 h-72 bg-primary/20 rounded-full blur-3xl animate-blob" />
+          <div className="absolute bottom-20 right-20 w-72 h-72 bg-accent/20 rounded-full blur-3xl animate-blob animation-delay-2000" />
         </div>
-        
-        <div className="space-y-6">
-          <div className="flex items-start gap-4">
-            <div className="h-10 w-10 rounded-lg bg-primary/20 flex items-center justify-center shrink-0">
-              <DollarSign className="h-5 w-5 text-primary" />
-            </div>
-            <div>
-              <h3 className="font-semibold">Credit Score Analysis</h3>
-              <p className="text-sm text-sidebar-foreground/70">
-                Get a comprehensive creditworthiness score based on your financial data
-              </p>
-            </div>
+        <div className="relative z-10 p-12 flex flex-col justify-between text-sidebar-foreground">
+          <div>
+            <Logo size="lg" />
+            <h1 className="text-4xl lg:text-5xl font-bold mt-12 tracking-tight leading-tight">
+              Financial Health
+              <br />
+              <span className="bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
+                Assessment for SMEs
+              </span>
+            </h1>
+            <p className="text-lg text-sidebar-foreground/70 mt-6 max-w-md leading-relaxed">
+              Get AI-powered insights into your business finances. Understand your creditworthiness, 
+              identify risks, and receive actionable recommendations.
+            </p>
           </div>
           
-          <div className="flex items-start gap-4">
-            <div className="h-10 w-10 rounded-lg bg-primary/20 flex items-center justify-center shrink-0">
-              <Factory className="h-5 w-5 text-primary" />
-            </div>
-            <div>
-              <h3 className="font-semibold">Industry Benchmarking</h3>
-              <p className="text-sm text-sidebar-foreground/70">
-                Compare your metrics against industry averages
-              </p>
-            </div>
+          <div className="space-y-6">
+            {features.map((feature, index) => (
+              <div key={index} className="flex items-start gap-4 p-4 rounded-2xl bg-white/5 backdrop-blur-sm border border-white/10 hover-elevate overflow-visible">
+                <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shrink-0 shadow-lg">
+                  <feature.icon className="h-6 w-6 text-white" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-lg">{feature.title}</h3>
+                  <p className="text-sm text-sidebar-foreground/70 mt-1">
+                    {feature.desc}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+          
+          <div className="flex items-center gap-3 text-sm text-sidebar-foreground/50">
+            <Shield className="h-4 w-4" />
+            <span>Trusted by 10,000+ SMEs across India</span>
           </div>
         </div>
-        
-        <p className="text-sm text-sidebar-foreground/50">
-          Trusted by 1000+ SMEs across India
-        </p>
       </div>
 
-      <div className="flex-1 flex items-center justify-center p-8">
-        <div className="absolute top-4 right-4 flex items-center gap-2">
+      <div className="flex-1 flex items-center justify-center p-8 relative">
+        <div className="absolute inset-0 bg-gradient-to-br from-background via-background to-muted/30" />
+        <div className="absolute top-4 right-4 flex items-center gap-2 z-20">
           <LanguageToggle />
           <ThemeToggle />
         </div>
         
-        <div className="w-full max-w-md">
+        <div className="w-full max-w-md relative z-10">
           <div className="lg:hidden mb-8 text-center">
             <Logo size="lg" />
-            <p className="text-muted-foreground mt-2">{t('tagline')}</p>
+            <p className="text-muted-foreground mt-3">{t('tagline')}</p>
           </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>{activeTab === 'signin' ? t('signIn') : t('signUp')}</CardTitle>
-              <CardDescription>
+          <Card className="border-border/50 shadow-2xl backdrop-blur-sm">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-2xl">{activeTab === 'signin' ? t('signIn') : t('signUp')}</CardTitle>
+              <CardDescription className="text-base">
                 {activeTab === 'signin' 
                   ? 'Enter your credentials to access your dashboard' 
                   : 'Create an account to get started'}
@@ -221,7 +230,7 @@ export default function AuthPage() {
                         <Input
                           id="signin-password"
                           type="password"
-                          placeholder="••••••••"
+                          placeholder="Enter your password"
                           className="pl-10"
                           {...signInForm.register('password')}
                           data-testid="input-signin-password"
@@ -266,7 +275,7 @@ export default function AuthPage() {
                         <Input
                           id="signup-password"
                           type="password"
-                          placeholder="••••••••"
+                          placeholder="Create a password"
                           className="pl-10"
                           {...signUpForm.register('password')}
                           data-testid="input-signup-password"
