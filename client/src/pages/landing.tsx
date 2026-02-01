@@ -44,12 +44,6 @@ const benefits = [
   'Available in English & Hindi',
 ];
 
-const stats = [
-  { value: '10K+', label: 'SMEs Analyzed' },
-  { value: '₹500Cr+', label: 'Insights Generated' },
-  { value: '98%', label: 'Accuracy Rate' },
-  { value: '10', label: 'Industries Covered' },
-];
 
 export default function LandingPage() {
   const [, navigate] = useLocation();
@@ -121,14 +115,6 @@ export default function LandingPage() {
               </Button>
             </div>
 
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 max-w-3xl mx-auto">
-              {stats.map((stat, index) => (
-                <div key={index} className="text-center p-4 rounded-2xl bg-card/50 backdrop-blur-sm border border-border/50">
-                  <div className="text-3xl lg:text-4xl font-bold text-primary mb-1">{stat.value}</div>
-                  <div className="text-sm text-muted-foreground">{stat.label}</div>
-                </div>
-              ))}
-            </div>
           </div>
 
           <div className="mt-20 max-w-5xl mx-auto">
@@ -305,7 +291,7 @@ export default function LandingPage() {
             <span className="bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">Financial Health?</span>
           </h2>
           <p className="text-lg text-white/70 max-w-2xl mx-auto mb-10 leading-relaxed">
-            Join thousands of SMEs who trust FINCHECK AI for their financial analysis. 
+            Start analyzing your business finances today. 
             Get started in minutes, no credit card required.
           </p>
           <Button size="lg" variant="secondary" onClick={handleGetStarted} data-testid="button-cta-get-started">
@@ -320,7 +306,7 @@ export default function LandingPage() {
           <div className="flex flex-col md:flex-row justify-between items-center gap-6">
             <Logo />
             <p className="text-sm text-muted-foreground">
-              © 2025 FINCHECK AI. All rights reserved.
+              © 2026 FINCHECK AI. All rights reserved.
             </p>
           </div>
         </div>

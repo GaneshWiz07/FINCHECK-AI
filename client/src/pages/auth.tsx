@@ -169,7 +169,7 @@ export default function AuthPage() {
           
           <div className="flex items-center gap-3 text-sm text-sidebar-foreground/50">
             <Shield className="h-4 w-4" />
-            <span>Trusted by 10,000+ SMEs across India</span>
+            <span>Your trusted financial analysis partner</span>
           </div>
         </div>
       </div>
