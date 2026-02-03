@@ -10,14 +10,13 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci
 
-# Copy frontend source
+# Copy frontend source and config files
 COPY client/ ./client/
 COPY vite.config.ts ./
 COPY tsconfig*.json ./
 COPY tailwind.config.ts ./
 COPY postcss.config.js ./
 COPY shared/ ./shared/
-COPY attached_assets/ ./attached_assets/
 
 # Build frontend
 RUN npm run build
