@@ -204,11 +204,9 @@ def calculate_creditworthiness(scores: dict) -> dict:
 
 @router.post("/calculate")
 async def calculate_financial_health(request: AnalysisRequest):
-    print(f"Received analysis request: {request}")
     try:
         if request.financial_data:
             financial_data = request.financial_data.model_dump()
-            print(f"Financial data: {financial_data}")
         else:
             raise HTTPException(status_code=400, detail="No financial data provided")
         

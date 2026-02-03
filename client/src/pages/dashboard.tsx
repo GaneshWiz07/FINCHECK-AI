@@ -79,12 +79,9 @@ export default function DashboardPage() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
   const handleFileUpload = async (file: File) => {
-    console.log('handleFileUpload started for file:', file.name);
     setIsUploading(true);
     try {
-      console.log('Calling uploadFile...');
       const result = await uploadFile(file);
-      console.log('Upload result:', result);
       setFinancialData(result.financial_data);
 
       toast({
@@ -92,11 +89,8 @@ export default function DashboardPage() {
         description: `Detected ${result.summary.columns_detected.length} financial columns`,
       });
 
-      console.log('Starting runAnalysis...');
       await runAnalysis(result.financial_data);
-      console.log('runAnalysis completed');
     } catch (error) {
-      console.error('handleFileUpload error:', error);
       toast({
         title: 'Upload failed',
         description: error instanceof Error ? error.message : 'Please try again',
@@ -104,35 +98,27 @@ export default function DashboardPage() {
       });
     } finally {
       setIsUploading(false);
-      console.log('handleFileUpload finished');
     }
   };
 
   const runAnalysis = async (data: Record<string, number[]>) => {
-    console.log('Starting analysis with data:', data);
     setIsAnalyzing(true);
     try {
-      console.log('Calling /analysis/calculate...');
       const result = await api.post<AnalysisData>('/analysis/calculate', {
         financial_data: data,
       });
-      console.log('Analysis result:', result);
       setAnalysisData(result);
 
       if (profile?.industry) {
-        console.log('Calling /benchmarks/compare...');
         const benchmark = await api.post<BenchmarkData>('/benchmarks/compare', {
           industry: profile.industry,
           analysis_data: result,
         });
-        console.log('Benchmark result:', benchmark);
         setBenchmarkData(benchmark);
       }
 
       setActiveTab('analysis');
-      console.log('Analysis complete, switching to analysis tab');
     } catch (error) {
-      console.error('Analysis error:', error);
       toast({
         title: 'Analysis failed',
         description: error instanceof Error ? error.message : 'Please try again',
