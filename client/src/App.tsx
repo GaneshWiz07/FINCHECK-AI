@@ -7,14 +7,12 @@ import { AuthProvider } from "@/context/AuthContext";
 import { LanguageProvider } from "@/context/LanguageContext";
 import NotFound from "@/pages/not-found";
 import LandingPage from "@/pages/landing";
-import AuthPage from "@/pages/auth";
 import DashboardPage from "@/pages/dashboard";
 
 function Router() {
   return (
     <Switch>
       <Route path="/" component={LandingPage} />
-      <Route path="/auth" component={AuthPage} />
       <Route path="/dashboard" component={DashboardPage} />
       <Route component={NotFound} />
     </Switch>

@@ -1,31 +1,23 @@
-from fastapi import HTTPException, Depends
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from config import supabase
+# Authentication middleware - DISABLED
+# All endpoints are now publicly accessible
 
-security = HTTPBearer(auto_error=False)
+class MockUser:
+    """Mock user object for compatibility"""
+    def __init__(self):
+        self.id = "demo-user-001"
+        self.email = "demo@fincheck.ai"
+        self.user_metadata = {
+            "business_name": "Demo Business",
+            "industry": "technology",
+            "annual_revenue": "1Cr-5Cr",
+            "language": "en"
+        }
 
-async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
-    if credentials is None:
-        raise HTTPException(status_code=401, detail="Not authenticated")
-    
-    try:
-        token = credentials.credentials
-        user = supabase.auth.get_user(token)
-        
-        if user.user is None:
-            raise HTTPException(status_code=401, detail="Invalid or expired token")
-        
-        return user.user
-    except Exception as e:
-        raise HTTPException(status_code=401, detail=f"Authentication failed: {str(e)}")
+# Always return mock user - no authentication required
+async def get_current_user():
+    """Return mock user since authentication is disabled"""
+    return MockUser()
 
-async def get_optional_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
-    if credentials is None:
-        return None
-    
-    try:
-        token = credentials.credentials
-        user = supabase.auth.get_user(token)
-        return user.user if user.user else None
-    except:
-        return None
+async def get_optional_user():
+    """Return mock user since authentication is disabled"""
+    return MockUser()

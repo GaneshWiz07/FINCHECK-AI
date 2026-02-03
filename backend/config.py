@@ -1,12 +1,8 @@
 import os
-from supabase import create_client, Client
 
-SUPABASE_URL = os.environ.get("SUPABASE_URL", "")
-SUPABASE_ANON_KEY = os.environ.get("SUPABASE_ANON_KEY", "")
-OPENAI_API_KEY = os.environ.get("AI_INTEGRATIONS_OPENAI_API_KEY", "")
-OPENAI_BASE_URL = os.environ.get("AI_INTEGRATIONS_OPENAI_BASE_URL", "")
+# Groq API Configuration (OpenAI-compatible)
+GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "")
+GROQ_BASE_URL = "https://api.groq.com/openai/v1"
 
-def get_supabase_client() -> Client:
-    return create_client(SUPABASE_URL, SUPABASE_ANON_KEY)
-
-supabase: Client = get_supabase_client()
+# Supabase has been removed - authentication is disabled
+supabase = None

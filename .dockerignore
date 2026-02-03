@@ -1,0 +1,53 @@
+# Dependencies
+node_modules/
+__pycache__/
+*.pyc
+*.pyo
+.pycache/
+*.egg-info/
+dist/
+build/
+
+# Environment files (keep .env.example)
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+
+# Testing
+coverage/
+.nyc_output/
+
+# Misc
+*.md
+LICENSE
+.editorconfig
+.eslintrc*
+.prettierrc*
+
+# Python virtual env
+venv/
+.venv/
+env/
+
+# Lock files (will be regenerated)
+uv.lock

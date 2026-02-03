@@ -1,19 +1,20 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import Dict, Optional
 import os
 from openai import OpenAI
-from auth_middleware import get_current_user
 
 router = APIRouter()
 
-OPENAI_API_KEY = os.environ.get("AI_INTEGRATIONS_OPENAI_API_KEY", "")
-OPENAI_BASE_URL = os.environ.get("AI_INTEGRATIONS_OPENAI_BASE_URL", "")
+# Groq API configuration - uses OpenAI-compatible API
+GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "")
+GROQ_BASE_URL = "https://api.groq.com/openai/v1"
 
+# Initialize Groq client (OpenAI-compatible)
 client = OpenAI(
-    api_key=OPENAI_API_KEY,
-    base_url=OPENAI_BASE_URL
-)
+    api_key=GROQ_API_KEY,
+    base_url=GROQ_BASE_URL
+) if GROQ_API_KEY else None
 
 class InsightsRequest(BaseModel):
     analysis_data: Dict
@@ -70,7 +71,10 @@ INSIGHTS_PROMPT_HI = """निम्नलिखित वित्तीय व
 अपनी प्रतिक्रिया को हेडर के साथ स्पष्ट खंडों में प्रारूपित करें।"""
 
 @router.post("/generate")
-async def generate_insights(request: InsightsRequest, current_user = Depends(get_current_user)):
+async def generate_insights(request: InsightsRequest):
+    if not client:
+        raise HTTPException(status_code=503, detail="AI service not configured. Please set GROQ_API_KEY environment variable.")
+    
     try:
         analysis = request.analysis_data
         
@@ -89,13 +93,14 @@ async def generate_insights(request: InsightsRequest, current_user = Depends(get
             credit_grade=analysis.get("creditworthiness", {}).get("grade", "N/A")
         )
         
+        # Using Groq's llama model (fast and free tier available)
         response = client.chat.completions.create(
-            model="gpt-5.2",
+            model="llama-3.3-70b-versatile",
             messages=[
                 {"role": "system", "content": SYSTEM_PROMPT},
                 {"role": "user", "content": prompt}
             ],
-            max_completion_tokens=2048,
+            max_tokens=2048,
             temperature=0.7
         )
         
@@ -111,7 +116,10 @@ async def generate_insights(request: InsightsRequest, current_user = Depends(get
         raise HTTPException(status_code=500, detail=f"Error generating insights: {str(e)}")
 
 @router.post("/quick-summary")
-async def generate_quick_summary(request: InsightsRequest, current_user = Depends(get_current_user)):
+async def generate_quick_summary(request: InsightsRequest):
+    if not client:
+        raise HTTPException(status_code=503, detail="AI service not configured. Please set GROQ_API_KEY environment variable.")
+    
     try:
         analysis = request.analysis_data
         credit_score = analysis.get("creditworthiness", {}).get("score", 50)
@@ -125,12 +133,12 @@ async def generate_quick_summary(request: InsightsRequest, current_user = Depend
             provide a 2-sentence summary of their financial position and one priority action."""
         
         response = client.chat.completions.create(
-            model="gpt-5.2",
+            model="llama-3.3-70b-versatile",
             messages=[
                 {"role": "system", "content": "You are a concise financial advisor. Be brief and actionable."},
                 {"role": "user", "content": prompt}
             ],
-            max_completion_tokens=200
+            max_tokens=200
         )
         
         return {

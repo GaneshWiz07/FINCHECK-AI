@@ -1,9 +1,8 @@
-import { useState, useEffect } from 'react';
-import { useLocation } from 'wouter';
-import { 
-  LayoutDashboard, Upload, BarChart3, Sparkles, Building, FileText, 
-  Settings, LogOut, TrendingUp, AlertTriangle, DollarSign, Wallet,
-  ChevronRight, Loader2
+import { useState } from 'react';
+import {
+  LayoutDashboard, Upload, BarChart3, Sparkles, Building, FileText,
+  TrendingUp, AlertTriangle, DollarSign, Wallet,
+  ChevronRight, Loader2, Home
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -19,6 +18,7 @@ import { ScoreGauge } from '@/components/ScoreGauge';
 import { MetricCard } from '@/components/MetricCard';
 import { InsightsPanel } from '@/components/InsightsPanel';
 import { BenchmarkComparison } from '@/components/BenchmarkComparison';
+import { generatePDFReport } from '@/lib/pdf-report';
 import { uploadFile, api } from '@/lib/api';
 import {
   Sidebar,
@@ -34,7 +34,7 @@ import {
   SidebarTrigger,
 } from '@/components/ui/sidebar';
 import {
-  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, 
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip,
   ResponsiveContainer, BarChart, Bar, Legend, PieChart, Pie, Cell
 } from 'recharts';
 
@@ -66,11 +66,10 @@ const sidebarItems = [
 const CHART_COLORS = ['hsl(217, 91%, 60%)', 'hsl(142, 71%, 45%)', 'hsl(38, 92%, 50%)', 'hsl(199, 89%, 48%)'];
 
 export default function DashboardPage() {
-  const [, navigate] = useLocation();
-  const { user, profile, signOut, loading: authLoading } = useAuth();
+  const { user, profile } = useAuth();
   const { t, language } = useLanguage();
   const { toast } = useToast();
-  
+
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isUploading, setIsUploading] = useState(false);
   const [analysisData, setAnalysisData] = useState<AnalysisData | null>(null);
@@ -79,27 +78,25 @@ export default function DashboardPage() {
   const [insights, setInsights] = useState<string>('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
-  useEffect(() => {
-    if (!authLoading && !user) {
-      navigate('/auth');
-    }
-  }, [user, authLoading, navigate]);
-
   const handleFileUpload = async (file: File) => {
-    if (!user) return;
-    
+    console.log('handleFileUpload started for file:', file.name);
     setIsUploading(true);
     try {
+      console.log('Calling uploadFile...');
       const result = await uploadFile(file);
+      console.log('Upload result:', result);
       setFinancialData(result.financial_data);
-      
+
       toast({
         title: 'File uploaded successfully',
         description: `Detected ${result.summary.columns_detected.length} financial columns`,
       });
-      
+
+      console.log('Starting runAnalysis...');
       await runAnalysis(result.financial_data);
+      console.log('runAnalysis completed');
     } catch (error) {
+      console.error('handleFileUpload error:', error);
       toast({
         title: 'Upload failed',
         description: error instanceof Error ? error.message : 'Please try again',
@@ -107,30 +104,35 @@ export default function DashboardPage() {
       });
     } finally {
       setIsUploading(false);
+      console.log('handleFileUpload finished');
     }
   };
 
   const runAnalysis = async (data: Record<string, number[]>) => {
-    if (!user) return;
-    
+    console.log('Starting analysis with data:', data);
     setIsAnalyzing(true);
     try {
+      console.log('Calling /analysis/calculate...');
       const result = await api.post<AnalysisData>('/analysis/calculate', {
-        user_id: user.id,
         financial_data: data,
       });
+      console.log('Analysis result:', result);
       setAnalysisData(result);
-      
+
       if (profile?.industry) {
+        console.log('Calling /benchmarks/compare...');
         const benchmark = await api.post<BenchmarkData>('/benchmarks/compare', {
           industry: profile.industry,
           analysis_data: result,
         });
+        console.log('Benchmark result:', benchmark);
         setBenchmarkData(benchmark);
       }
-      
+
       setActiveTab('analysis');
+      console.log('Analysis complete, switching to analysis tab');
     } catch (error) {
+      console.error('Analysis error:', error);
       toast({
         title: 'Analysis failed',
         description: error instanceof Error ? error.message : 'Please try again',
@@ -143,47 +145,28 @@ export default function DashboardPage() {
 
   const generateInsights = async (): Promise<string> => {
     if (!analysisData) throw new Error('No analysis data available');
-    
+
     const result = await api.post<{ insights: string }>('/insights/generate', {
       analysis_data: analysisData,
       language,
       business_name: profile?.business_name,
       industry: profile?.industry,
     });
-    
+
     setInsights(result.insights);
     return result.insights;
   };
 
-  const handleSignOut = async () => {
-    try {
-      await signOut();
-      navigate('/');
-    } catch (error) {
-      toast({
-        title: 'Sign out failed',
-        description: 'Please try again',
-        variant: 'destructive',
-      });
-    }
-  };
 
-  if (authLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
 
   const sampleChartData = financialData?.revenue?.map((rev, idx) => ({
     month: `Month ${idx + 1}`,
     revenue: rev,
     expenses: financialData?.expenses?.[idx] || 0,
   })) || [
-    { month: 'Jan', revenue: 0, expenses: 0 },
-    { month: 'Feb', revenue: 0, expenses: 0 },
-  ];
+      { month: 'Jan', revenue: 0, expenses: 0 },
+      { month: 'Feb', revenue: 0, expenses: 0 },
+    ];
 
   const cashFlowData = financialData?.cash_inflow?.map((inflow, idx) => ({
     month: `Month ${idx + 1}`,
@@ -227,9 +210,9 @@ export default function DashboardPage() {
           <SidebarFooter className="p-4">
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton onClick={handleSignOut} data-testid="button-signout">
-                  <LogOut className="h-4 w-4" />
-                  <span>{t('signOut')}</span>
+                <SidebarMenuButton onClick={() => window.location.href = '/'} data-testid="button-home">
+                  <Home className="h-4 w-4" />
+                  <span>Home</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>
@@ -242,8 +225,12 @@ export default function DashboardPage() {
               <div className="flex items-center gap-4">
                 <SidebarTrigger data-testid="button-sidebar-toggle" />
                 <div>
-                  <h1 className="font-semibold">{t('welcome')}, {profile?.business_name || 'User'}</h1>
-                  <p className="text-xs text-muted-foreground">{profile?.industry || 'SME'}</p>
+                  <h1 className="font-semibold">
+                    {profile?.business_name || user?.email?.split('@')[0] || 'Dashboard'}
+                  </h1>
+                  <p className="text-xs text-muted-foreground">
+                    {profile?.industry || 'Financial Health Dashboard'}
+                  </p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -347,11 +334,11 @@ export default function DashboardPage() {
                                 <XAxis dataKey="month" className="text-xs" />
                                 <YAxis className="text-xs" />
                                 <RechartsTooltip />
-                                <Area 
-                                  type="monotone" 
-                                  dataKey="net" 
-                                  stroke="hsl(142, 71%, 45%)" 
-                                  fill="hsl(142, 71%, 45%)" 
+                                <Area
+                                  type="monotone"
+                                  dataKey="net"
+                                  stroke="hsl(142, 71%, 45%)"
+                                  fill="hsl(142, 71%, 45%)"
                                   fillOpacity={0.2}
                                   name="Net Cash Flow"
                                 />
@@ -366,8 +353,8 @@ export default function DashboardPage() {
                       <h2 className="text-lg font-semibold">Quick Actions</h2>
                     </div>
                     <div className="grid gap-4 md:grid-cols-3">
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         className="h-auto p-4 justify-start"
                         onClick={() => setActiveTab('insights')}
                         data-testid="button-quick-insights"
@@ -383,8 +370,8 @@ export default function DashboardPage() {
                           <ChevronRight className="h-4 w-4 ml-auto" />
                         </div>
                       </Button>
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         className="h-auto p-4 justify-start"
                         onClick={() => setActiveTab('benchmarks')}
                         data-testid="button-quick-benchmarks"
@@ -400,8 +387,8 @@ export default function DashboardPage() {
                           <ChevronRight className="h-4 w-4 ml-auto" />
                         </div>
                       </Button>
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         className="h-auto p-4 justify-start"
                         onClick={() => setActiveTab('reports')}
                         data-testid="button-quick-reports"
@@ -432,7 +419,7 @@ export default function DashboardPage() {
                   </p>
                 </div>
                 <FileUpload onUpload={handleFileUpload} isLoading={isUploading || isAnalyzing} />
-                
+
                 <Card>
                   <CardHeader>
                     <CardTitle className="text-base">Expected Data Format</CardTitle>
@@ -599,9 +586,27 @@ export default function DashboardPage() {
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <Button 
+                    <Button
                       disabled={!analysisData}
-                      onClick={() => toast({ title: 'Report Generation', description: 'PDF report will be downloaded shortly' })}
+                      onClick={() => {
+                        if (analysisData) {
+                          generatePDFReport({
+                            businessName: profile?.business_name || 'Your Business',
+                            industry: profile?.industry || 'General',
+                            analysisData,
+                            benchmarkData: benchmarkData || undefined,
+                            insights: undefined,
+                            generatedAt: new Date().toLocaleDateString('en-IN', {
+                              year: 'numeric',
+                              month: 'long',
+                              day: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            }),
+                          });
+                          toast({ title: 'Report Generated', description: 'Print dialog opened - save as PDF' });
+                        }
+                      }}
                       data-testid="button-download-report"
                     >
                       <FileText className="h-4 w-4 mr-2" />

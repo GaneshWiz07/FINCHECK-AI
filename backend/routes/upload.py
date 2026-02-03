@@ -1,11 +1,8 @@
-from fastapi import APIRouter, HTTPException, UploadFile, File, Form, Depends
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi import APIRouter, HTTPException, UploadFile, File
 from typing import Optional
 import pandas as pd
 import io
 import json
-from config import supabase
-from auth_middleware import get_current_user, security
 
 router = APIRouter()
 
@@ -75,21 +72,9 @@ def validate_and_process_file(file_content: bytes, filename: str) -> dict:
         raise ValueError(str(e))
 
 @router.post("/file")
-async def upload_file(
-    file: UploadFile = File(...),
-    credentials: HTTPAuthorizationCredentials = Depends(security)
-):
+async def upload_file(file: UploadFile = File(...)):
+    """Process uploaded financial file - no authentication required"""
     try:
-        if credentials is None:
-            raise HTTPException(status_code=401, detail="Not authenticated")
-        
-        token = credentials.credentials
-        user_response = supabase.auth.get_user(token)
-        if user_response.user is None:
-            raise HTTPException(status_code=401, detail="Invalid token")
-        
-        user_id = user_response.user.id
-        
         if not file.filename.endswith(('.csv', '.xlsx', '.xls')):
             raise HTTPException(
                 status_code=400, 
@@ -103,20 +88,8 @@ async def upload_file(
         
         result = validate_and_process_file(content, file.filename)
         
-        upload_record = {
-            "user_id": user_id,
-            "filename": file.filename,
-            "columns_detected": result["summary"]["columns_detected"],
-            "total_rows": result["summary"]["total_rows"],
-            "financial_data": json.dumps(result["financial_data"]),
-            "raw_data": json.dumps(result["raw_data"][:100])
-        }
-        
-        response = supabase.table("financial_uploads").insert(upload_record).execute()
-        
         return {
             "message": "File processed successfully",
-            "upload_id": response.data[0]["id"] if response.data else None,
             "summary": result["summary"],
             "financial_data": result["financial_data"]
         }
@@ -127,10 +100,6 @@ async def upload_file(
         raise HTTPException(status_code=500, detail=f"Error processing file: {str(e)}")
 
 @router.get("/history")
-async def get_upload_history(current_user = Depends(get_current_user)):
-    try:
-        user_id = current_user.id
-        response = supabase.table("financial_uploads").select("*").eq("user_id", user_id).order("created_at", desc=True).execute()
-        return {"uploads": response.data}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+async def get_upload_history():
+    """No database - return empty history"""
+    return {"uploads": [], "message": "Upload history is stored locally only"}

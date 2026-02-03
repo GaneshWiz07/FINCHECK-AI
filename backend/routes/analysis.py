@@ -1,9 +1,7 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import Dict, List, Optional
 import json
-from config import supabase
-from auth_middleware import get_current_user
 
 router = APIRouter()
 
@@ -205,17 +203,12 @@ def calculate_creditworthiness(scores: dict) -> dict:
     }
 
 @router.post("/calculate")
-async def calculate_financial_health(request: AnalysisRequest, current_user = Depends(get_current_user)):
+async def calculate_financial_health(request: AnalysisRequest):
+    print(f"Received analysis request: {request}")
     try:
-        user_id = current_user.id
-        
-        if request.upload_id:
-            response = supabase.table("financial_uploads").select("financial_data, user_id").eq("id", request.upload_id).single().execute()
-            if response.data["user_id"] != user_id:
-                raise HTTPException(status_code=403, detail="Not authorized to access this upload")
-            financial_data = json.loads(response.data["financial_data"])
-        elif request.financial_data:
-            financial_data = request.financial_data.dict()
+        if request.financial_data:
+            financial_data = request.financial_data.model_dump()
+            print(f"Financial data: {financial_data}")
         else:
             raise HTTPException(status_code=400, detail="No financial data provided")
         
@@ -250,8 +243,6 @@ async def calculate_financial_health(request: AnalysisRequest, current_user = De
         creditworthiness = calculate_creditworthiness(all_scores)
         
         analysis_result = {
-            "user_id": user_id,
-            "upload_id": request.upload_id,
             "cash_flow_stability": cash_flow_stability,
             "expense_ratio": expense_ratio,
             "working_capital": working_capital,
@@ -260,30 +251,13 @@ async def calculate_financial_health(request: AnalysisRequest, current_user = De
             "overall_health": creditworthiness["status"]
         }
         
-        supabase.table("financial_analyses").insert({
-            "user_id": user_id,
-            "upload_id": request.upload_id,
-            "analysis_data": json.dumps(analysis_result)
-        }).execute()
-        
         return analysis_result
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/history")
-async def get_analysis_history(current_user = Depends(get_current_user)):
-    try:
-        user_id = current_user.id
-        response = supabase.table("financial_analyses").select("*").eq("user_id", user_id).order("created_at", desc=True).execute()
-        
-        analyses = []
-        for record in response.data:
-            analysis = json.loads(record["analysis_data"])
-            analysis["id"] = record["id"]
-            analysis["created_at"] = record["created_at"]
-            analyses.append(analysis)
-        
-        return {"analyses": analyses}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+async def get_analysis_history():
+    # No database - return empty history
+    return {"analyses": [], "message": "Analysis history is stored locally only"}
+
