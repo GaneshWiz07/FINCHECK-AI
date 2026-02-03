@@ -16,7 +16,6 @@ COPY vite.config.ts ./
 COPY tsconfig*.json ./
 COPY tailwind.config.ts ./
 COPY postcss.config.js ./
-COPY shared/ ./shared/
 
 # Build frontend
 RUN npm run build
