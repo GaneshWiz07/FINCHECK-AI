@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 from contextlib import asynccontextmanager
 import uvicorn
 import os
@@ -55,6 +55,7 @@ app.include_router(insights_router, prefix="/api/insights", tags=["AI Insights"]
 app.include_router(benchmarks_router, prefix="/api/benchmarks", tags=["Industry Benchmarks"])
 
 @app.get("/api/health")
+@app.head("/api/health")
 async def health_check():
     return {"status": "healthy", "service": "FINCHECK AI"}
 
@@ -64,8 +65,20 @@ STATIC_DIR = Path(__file__).parent.parent / "dist" / "public"
 
 if STATIC_DIR.exists():
     print(f"Serving static files from {STATIC_DIR}")
+    
     # Mount static assets (js, css, images)
-    app.mount("/assets", StaticFiles(directory=str(STATIC_DIR / "assets")), name="assets")
+    assets_dir = STATIC_DIR / "assets"
+    if assets_dir.exists():
+        app.mount("/assets", StaticFiles(directory=str(assets_dir)), name="assets")
+    
+    # Root route - serve index.html for both GET and HEAD
+    @app.get("/")
+    async def serve_root():
+        return FileResponse(str(STATIC_DIR / "index.html"))
+    
+    @app.head("/")
+    async def head_root():
+        return Response(status_code=200)
     
     # Catch-all route for SPA - must be last
     @app.get("/{full_path:path}")
@@ -74,15 +87,25 @@ if STATIC_DIR.exists():
         if full_path.startswith("api/"):
             return {"error": "Not found"}
         
+        # Check if it's a static file request
+        static_file = STATIC_DIR / full_path
+        if static_file.exists() and static_file.is_file():
+            return FileResponse(str(static_file))
+        
         # Serve index.html for all other routes (SPA routing)
         index_path = STATIC_DIR / "index.html"
         if index_path.exists():
             return FileResponse(str(index_path))
         return {"error": "Frontend not built"}
+    
+    @app.head("/{full_path:path}")
+    async def head_spa(full_path: str):
+        return Response(status_code=200)
 else:
     print(f"Static files not found at {STATIC_DIR} - running in development mode")
     
     @app.get("/")
+    @app.head("/")
     async def root():
         return {
             "message": "FINCHECK AI API",
